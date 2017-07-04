@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web.Http;
 using Microsoft.Owin.Hosting;
 
 namespace threading1
@@ -14,7 +16,7 @@ namespace threading1
         private static HttpClient _httpClient;
 
         private static string _baseAddress = "http://localhost:9000/";
-        private IDisposable _webApp;
+        private ClientWebSocket _clientWebSocket;
 
         public static void Main(string[] args)
             => new Program().MainAsync().GetAwaiter().GetResult();
@@ -25,15 +27,13 @@ namespace threading1
             try
             {
                 _httpClient = new HttpClient();
-                _webApp = WebApp.Start<WebAppStartup>(_baseAddress);
+                _clientWebSocket = new ClientWebSocket();
 
                 var slackMessageEventingSystem = new SlackMessageEventingSystem();
                 var chatquery = new Chatquery(_httpClient);
                 var cancellationTokenSource = new CancellationTokenSource();
-                slackMessageEventingSystem.MessageArrived += SlackMessageEventingSystem_MessageArrived;
-
+                slackMessageEventingSystem.MessageArrived += SlackMessageEventingSystemOnMessageArrived;
                 slackMessageEventingSystem.EventLoop(chatquery, cancellationTokenSource.Token);
-                
                 await Task.Delay(-1, cancellationTokenSource.Token);
             }
             catch (Exception e)
@@ -45,30 +45,30 @@ namespace threading1
             }
         }
 
-        private void SlackMessageEventingSystem_MessageArrived(object sender, Task<HttpResponseMessage> e)
+
+        private async void SlackMessageEventingSystemOnMessageArrived(Task<HttpResponseMessage> httpResponseMessage)
         {
-            throw new NotImplementedException();
+            string message = httpResponseMessage.ToString();
+            byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+            await _clientWebSocket.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Text, true,
+                CancellationToken.None);
         }
+
+        //private void SlackMessageEventingSystemOnMessageArrived(object sender, Task<HttpResponseMessage> task)
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        //private void SlackMessageEventingSystem_MessageArrived(object sender, Task<HttpResponseMessage> e)
+        //{
+        //    string message = e;
+        //    byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+        //    await _clientWebSocket.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Text, true, CancellationToken.None);
+        //}
 
         public void Dispose()
         {
-            _webApp?.Dispose();
             _httpClient?.Dispose();
-        }
-    }
-
-    public class Chatquery
-    {
-        private HttpClient _httpClient;
-
-        public Chatquery(HttpClient httpClient)
-        {
-            _httpClient = httpClient;
-        }
-
-        public async Task<Task<HttpResponseMessage>> CheckChat()
-        {
-            return _httpClient.GetAsync("https://www.google.com/");
         }
     }
 }
