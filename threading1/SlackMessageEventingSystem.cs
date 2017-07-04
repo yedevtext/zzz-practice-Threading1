@@ -7,12 +7,11 @@ namespace threading1
 {
     public class SlackMessageEventingSystem
     {
-
         public event EventHandler<Task<HttpResponseMessage>> MessageArrived;
 
         public SlackMessageEventingSystem()
         {
-            MessageArrived+=OnMessageArrived;
+            MessageArrived += OnMessageArrived;
         }
 
         private void OnMessageArrived(object sender, Task<HttpResponseMessage> message)
@@ -28,28 +27,31 @@ namespace threading1
         /// <param name="chatquery"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task EventLoop(Chatquery chatquery, CancellationToken cancellationToken)
+        public void EventLoop(Chatquery chatquery, CancellationToken cancellationToken)
         {
-            while (!cancellationToken.IsCancellationRequested)
+            Task.Run(() =>
             {
-                await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    Task.Delay(TimeSpan.FromSeconds(5), cancellationToken).GetAwaiter().GetResult();
 
-                Task<HttpResponseMessage> message;
-                try
-                {
-                    message = await chatquery.CheckChat();
+                    Task<HttpResponseMessage> message;
+                    try
+                    {
+                        message = chatquery.CheckChat().GetAwaiter().GetResult();
+                    }
+                    catch (TimeoutException)
+                    {
+                        NoMessagesInTimeout();
+                        continue;
+                    }
+                    catch (Exception e)
+                    {
+                        break;
+                    }
+                    OnMessageArrived(null, message);
                 }
-                catch (TimeoutException)
-                {
-                    NoMessagesInTimeout();
-                    continue;
-                }
-                catch (Exception e)
-                {
-                    break;
-                }
-                OnMessageArrived(null, message);
-            }
+            }, cancellationToken);
         }
 
 
@@ -86,7 +88,6 @@ namespace threading1
         //    }, cancellationToken);
         //}
 
-       
 
         private void NoMessagesInTimeout()
         {

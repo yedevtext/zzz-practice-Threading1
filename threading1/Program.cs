@@ -26,17 +26,13 @@ namespace threading1
             {
                 _httpClient = new HttpClient();
                 _webApp = WebApp.Start<WebAppStartup>(_baseAddress);
+
                 var slackMessageEventingSystem = new SlackMessageEventingSystem();
                 var chatquery = new Chatquery(_httpClient);
                 var cancellationTokenSource = new CancellationTokenSource();
                 slackMessageEventingSystem.MessageArrived += SlackMessageEventingSystem_MessageArrived;
 
-                await slackMessageEventingSystem.EventLoop(chatquery, cancellationTokenSource.Token);
-                
-                //BasicEventloop.EventLoop2(chatquery, cancellationTokenSource.Token);
-                ////await Task.Delay(TimeSpan.FromSeconds(1), cancellationTokenSource.Token);
-                ////await BasicEventloop.EventLoop(chatquery, cancellationTokenSource.Token);
-                /// 
+                slackMessageEventingSystem.EventLoop(chatquery, cancellationTokenSource.Token);
                 
                 await Task.Delay(-1, cancellationTokenSource.Token);
             }
