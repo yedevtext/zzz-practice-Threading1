@@ -20,6 +20,7 @@ namespace EventListener
         private static string _eventDisplayedUrl = "http://localhost:8080/SlackEventDisplay/";
 
         private static HttpClient _httpClient = new HttpClient();
+        private static volatile string _eventObject;
 
         static void Main(string[] prefixes)
         {
@@ -61,10 +62,35 @@ namespace EventListener
                         Console.WriteLine("Event Handled");
                         HttpListenerResponse response = context.Response;
 
-                        response.RedirectLocation = _eventDisplayedUrl;
+                        _eventObject = ShowRequestData(context.Request);
 
+                        response.StatusCode = (int) HttpStatusCode.OK;
+
+                        response.Close();
+
+                        //response.RedirectLocation = _eventDisplayedUrl;
+                        //// Construct a response.
+                        //string responseString = $"<HTML><BODY>{ShowRequestData(context.Request)}</BODY></HTML>";
+
+                        //Console.WriteLine(responseString);
+
+                        //byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
+
+                        //// Get a response stream and write the response to it.
+                        //response.ContentLength64 = buffer.Length;
+                        //System.IO.Stream output = response.OutputStream;
+                        //output.Write(buffer, 0, buffer.Length);
+                        //// You must close the output stream.
+                        //output.Close();
+                    }
+                    if (context.Request.RawUrl == Regex.Split(_eventDisplayedUrl, "8080")[1])
+                    {
+                        Console.WriteLine("Event Handled");
+                        HttpListenerResponse response = context.Response;
+
+                        response.RedirectLocation = _eventDisplayedUrl;
                         // Construct a response.
-                        string responseString = $"<HTML><BODY>{ShowRequestData(context.Request)}</BODY></HTML>";
+                        string responseString = $"<HTML><BODY>{_eventObject}</BODY></HTML>";
 
                         Console.WriteLine(responseString);
 
@@ -77,6 +103,7 @@ namespace EventListener
                         // You must close the output stream.
                         output.Close();
                     }
+
                 }
                 
                 // Shut down listener
