@@ -12,9 +12,9 @@ namespace threading1
             _httpClient = httpClient;
         }
 
-        public async Task<HttpResponseMessage> CheckChat()
+        public HttpResponseMessage CheckChat()
         {
-            return await _httpClient.GetAsync("https://www.google.com/");
+            return _httpClient.GetAsync("https://www.google.com/").GetAwaiter().GetResult();
         }
     }
 }

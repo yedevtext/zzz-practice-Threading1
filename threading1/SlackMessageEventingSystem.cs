@@ -14,10 +14,10 @@ namespace threading1
             MessageArrived += OnMessageArrived;
         }
 
-        public event Action<Task<HttpResponseMessage>> MessageArrived;
+        public event Action<HttpResponseMessage> MessageArrived;
 
 
-        private void OnMessageArrived(Task<HttpResponseMessage> message)
+        private void OnMessageArrived(HttpResponseMessage message)
         {
             if (MessageArrived != null)
                 MessageArrived(message);
@@ -38,7 +38,7 @@ namespace threading1
                 {
                     Task.Delay(TimeSpan.FromSeconds(5), cancellationToken).GetAwaiter().GetResult();
 
-                    Task<HttpResponseMessage> message;
+                    HttpResponseMessage message;
                     try
                     {
                         message = chatquery.CheckChat();

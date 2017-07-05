@@ -33,7 +33,9 @@ namespace threading1
                 var chatquery = new Chatquery(_httpClient);
                 var cancellationTokenSource = new CancellationTokenSource();
                 slackMessageEventingSystem.MessageArrived += SlackMessageEventingSystemOnMessageArrived;
+
                 slackMessageEventingSystem.EventLoop(chatquery, cancellationTokenSource.Token);
+
                 await Task.Delay(-1, cancellationTokenSource.Token);
             }
             catch (Exception e)
@@ -46,7 +48,7 @@ namespace threading1
         }
 
 
-        private async void SlackMessageEventingSystemOnMessageArrived(Task<HttpResponseMessage> httpResponseMessage)
+        private async void SlackMessageEventingSystemOnMessageArrived(HttpResponseMessage httpResponseMessage)
         {
             string message = httpResponseMessage.ToString();
             byte[] messageBytes = Encoding.UTF8.GetBytes(message);
